@@ -1,14 +1,33 @@
 package main
 
 import (
-	"fmt"
+	"todo-app/delivery"
+	"todo-app/repository"
+	"todo-app/usecase"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 func main() {
-	router := gin.Default()
-	fmt.Println("Hello World!!")
+	// repositoryをインスタンス化
+	tr := repository.NewSyncMapTodoRepository()
+	// usecaseをインスタンス化
+	tu := usecase.NewTodoUsecase(tr)
 
-	router.Run()
+	// fiberをインスタンス化
+	c := fiber.New()
+
+	// CORSの設定
+	c.Use(cors.New(cors.Config{
+		// https://docs.gofiber.io/api/middleware/cors#config
+		AllowCredentials: true,
+	}))
+
+	delivery.NewTodoAllGetHandler(c, tu)
+	delivery.NewTodoDeleteHandler(c, tu)
+	delivery.NewTodoStatusUpdateHandler(c, tu)
+	delivery.NewTodoStoreHandler(c, tu)
+
+	c.Listen(":80")
 }
